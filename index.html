@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcard Fauna del Mare Mediterraneo</title>
+  <style>
+    /* Background seabed */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('https://cdn.pixabay.com/photo/2017/08/30/12/35/water-2690139_1280.jpg') bottom center / cover no-repeat;
+      overflow-x: hidden;
+    }
+    /* Algae animation */
+    .algae {
+      position: absolute;
+      bottom: -50px;
+      width: 50px;
+      height: 100px;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/e/e9/Seaweed.png') center / contain no-repeat;
+      animation: float 10s infinite;
+      opacity: 0.7;
+    }
+    @keyframes float {
+      0% { transform: translateX(0) translateY(0) rotate(0deg); }
+      50% { transform: translateX(20px) translateY(-100vh) rotate(10deg); }
+      100% { transform: translateX(-20px) translateY(0) rotate(0deg); }
+    }
+    /* Score display */
+    #scoreboard {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.8);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 1.2em;
+      z-index: 1000;
+    }
+    /* Cards grid */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 100px 20px;
+    }
+    .flashcard {
+      perspective: 1000px;
+    }
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      padding-top: 75%; /* 4:3 ratio */
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+    .flashcard:hover .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+    .flashcard-side {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .flashcard-front {
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .flashcard-front img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .flashcard-back {
+      background: rgba(255,255,255,0.9);
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    .flashcard-back input {
+      width: 80%;
+      padding: 5px;
+      font-size: 1em;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .flashcard-back button {
+      padding: 5px 10px;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: #28a745;
+      color: white;
+    }
+    .flashcard-back .result {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="scoreboard">Punteggio: <span id="score">0</span> / 30</div>
+  <div class="cards-container" id="cards"></div>
+
+  <!-- Floating algae elements -->
+  <script>
+    const algaeCount = 8;
+    for (let i = 0; i < algaeCount; i++) {
+      const algae = document.createElement('div');
+      algae.className = 'algae';
+      algae.style.left = Math.random() * 100 + 'vw';
+      algae.style.animationDuration = 8 + Math.random() * 7 + 's';
+      document.body.appendChild(algae);
+    }
+  </script>
+
+  <script>
+    const species = [
+      { name: 'spigola', img: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/European_seabass.png' },
+      { name: 'orata', img: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Sparus_aurata.png' },
+      { name: 'sarago', img: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Diplodus_sargus_1.jpg' },
+      { name: 'ghiozzo', img: 'https://upload.wikimedia.org/wikipedia/commons/5/5d/Gobius_niger_001.jpg' },
+      { name: 'bavosa', img: 'https://upload.wikimedia.org/wikipedia/commons/7/7c/Holothuria_tubulosa.jpg' },
+      { name: 'gamberetto', img: 'https://upload.wikimedia.org/wikipedia/commons/7/73/Caride.jpg' },
+      { name: 'mormora', img: 'https://upload.wikimedia.org/wikipedia/commons/e/e6/Lithognathus_mormyrus.jpg' },
+      { name: 'occhiata', img: 'https://upload.wikimedia.org/wikipedia/commons/f/f2/Sarpa_salpa_%28juvenile%29.jpg' },
+      { name: 'polpo', img: 'https://upload.wikimedia.org/wikipedia/commons/5/5d/Octopus_vulgaris3.jpg' },
+      { name: 'seppia', img: 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Sepia_officinalis.jpg' },
+      { name: 'calamaro', img: 'https://upload.wikimedia.org/wikipedia/commons/6/60/Loligo_vulgaris_Linnaeus%2C_1758.jpg' },
+      { name: 'sardina', img: 'https://upload.wikimedia.org/wikipedia/commons/1/19/Sardina_pilchardus.jpg' },
+      { name: 'sgombro', img: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Atlantic_mackerel.jpg' },
+      { name: 'salpa', img: 'https://upload.wikimedia.org/wikipedia/commons/0/00/Salpa_salpa_yst.jpg' },
+      { name: 'sciarrano', img: 'https://upload.wikimedia.org/wikipedia/commons/d/de/Trachinus_draco.jpg' },
+      { name: 'donzella', img: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Thalassoma_pavo.jpg' },
+      { name: 'cefalo', img: 'https://upload.wikimedia.org/wikipedia/commons/5/5a/Mugil_cephalus.jpg' },
+      { name: 'pesce serra', img: 'https://upload.wikimedia.org/wikipedia/commons/a/ae/Sphyraena_sphyraena.jpg' },
+      { name: 'ricciola', img: 'https://upload.wikimedia.org/wikipedia/commons/d/da/Seriola_dumerili.jpg' },
+      { name: 'cernia', img: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Epinephelus_guaza.jpg' },
+      { name: 'spigola maculata', img: 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Dicentrarchus_punctatus.jpg' },
+      { name: 'scorfano', img: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Scorpaena_porcus.jpg' },
+      { name: 'boga', img: 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Boops_boops.jpg' },
+      { name: 'triglia di scoglio', img: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Mullus_surmuletus.jpg' },
+      { name: 'leccia stella', img: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Bluefish.jpg' },
+      { name: 'granchio di scoglio', img: 'https://upload.wikimedia.org/wikipedia/commons/8/80/Eriphia_verrucosa.jpg' },
+      { name: 'granchio di sabbia', img: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Carcinus_aestuarii.jpg' },
+      { name: 'cannolicchio', img: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Ensis_siliqua.jpg' },
+      { name: 'arsella', img: 'https://upload.wikimedia.org/wikipedia/commons/9/97/Venerupis_decussata.jpg' },
+      { name: 'patella', img: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Patella_vulgata.jpg' }
+    ];
+
+    let score = 0;
+    const total = species.length;
+
+    function createCard(item) {
+      const outer = document.createElement('div'); outer.className = 'flashcard';
+      const inner = document.createElement('div'); inner.className = 'flashcard-inner';
+      const front = document.createElement('div'); front.className = 'flashcard-side flashcard-front';
+      const img = document.createElement('img'); img.src = item.img; img.alt = item.name;
+      front.appendChild(img);
+
+      const back = document.createElement('div'); back.className = 'flashcard-side flashcard-back';
+      const input = document.createElement('input'); input.type = 'text'; input.placeholder = 'Nome comune';
+      const button = document.createElement('button'); button.textContent = 'Verifica';
+      const result = document.createElement('div'); result.className = 'result';
+      back.append(input, button, result);
+
+      button.addEventListener('click', () => {
+        const val = input.value.trim().toLowerCase();
+        if (val === item.name.toLowerCase()) {
+          result.textContent = '✅ Corretto!';
+          button.disabled = true;
+          score++; document.getElementById('score').textContent = score;
+        } else {
+          result.textContent = '❌ Sbagliato, riprova.';
+        }
+      });
+
+      inner.append(front, back);
+      outer.appendChild(inner);
+      return outer;
+    }
+
+    const container = document.getElementById('cards');
+    species.forEach(sp => container.appendChild(createCard(sp)));
+
+  </script>
+</body>
+</html>
